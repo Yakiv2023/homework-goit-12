@@ -1,0 +1,61 @@
+import json
+
+class Contact:
+    def __init__(self, name, phone):
+        self.name = name
+        self.phone = phone
+
+class AddressBook:
+    def __init__(self):
+        self.contacts = []
+
+    def add_contact(self, name, phone):
+        contact = Contact(name, phone)
+        self.contacts.append(contact)
+
+    def save_to_disk(self, filename):
+        contact_list = []
+        for contact in self.contacts:
+            contact_data = {
+                'name': contact.name,
+                'phone': contact.phone
+            }
+            contact_list.append(contact_data)
+
+        with open(filename, 'w') as file:
+            json.dump(contact_list, file)
+
+    def load_from_disk(self, filename):
+        with open(filename, 'r') as file:
+            contact_list = json.load(file)
+
+        self.contacts = []
+        for contact_data in contact_list: 
+            contact = Contact(contact_data['name'], contact_data['phone'])
+            self.contacts.append(contact)
+
+    def search_contacts(self, search_term):
+        results = []
+        for contact in self.contacts:
+            if search_term.lower() in contact.name.lower() or search_term in contact.phone:
+                results.append(contact)
+
+        return results
+
+# Приклад використання
+
+# Створення адресної книги та додавання контактів
+# address_book = AddressBook()
+# address_book.add_contact("John Doe", "1234567890")
+# address_book.add_contact("Jane Smith", "0987654321")
+
+# # Збереження адресної книги на диск
+# address_book.save_to_disk("address_book.json")
+
+# # Відновлення адресної книги з диска
+# address_book.load_from_disk("address_book.json")
+
+# # Пошук контактів за вмістом
+# results = address_book.search_contacts("John")
+# for contact in results:
+#     print(f"Name: {contact.name}, Phone: {contact.phone}")
