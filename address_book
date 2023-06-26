@@ -1,61 +1,122 @@
-import json
+import datetime
+import pickle
 
-class Contact:
-    def __init__(self, name, phone):
+class Field:
+    def __init__(self):
+        self._value = None
+
+    @property
+    def value(self):
+        return self._value
+
+    @value.setter
+    def value(self, new_value):
+        self.validate(new_value)
+        self._value = new_value
+
+    def validate(self, value):
+        pass
+
+
+class Phone(Field):
+    def validate(self, value):
+        # Перевірка на коректність веденого номера телефону
+        pass
+
+
+class Birthday(Field):
+    def validate(self, value):
+        # Перевірка на коректність веденого дня народження
+        pass
+
+
+class Record:
+    def __init__(self, name, phone, birthday=None):
         self.name = name
         self.phone = phone
+        self.birthday = birthday
+
+    def days_to_birthday(self):
+        if not self.birthday:
+            return None
+
+        today = datetime.date.today()
+        next_birthday = datetime.date(today.year, self.birthday.month, self.birthday.day)
+
+        if next_birthday < today:
+            next_birthday = datetime.date(today.year + 1, self.birthday.month, self.birthday.day)
+
+        days_until_birthday = (next_birthday - today).days
+
+        return days_until_birthday
+
 
 class AddressBook:
     def __init__(self):
-        self.contacts = []
+        self.records = []
 
-    def add_contact(self, name, phone):
-        contact = Contact(name, phone)
-        self.contacts.append(contact)
+    def add_record(self, record):
+        self.records.append(record)
 
-    def save_to_disk(self, filename):
-        contact_list = []
-        for contact in self.contacts:
-            contact_data = {
-                'name': contact.name,
-                'phone': contact.phone
-            }
-            contact_list.append(contact_data)
+    def validate_phone(self, phone):
+        # Перевірка на коректність формату номера телефону
+        pass
 
-        with open(filename, 'w') as file:
-            json.dump(contact_list, file)
+    def validate_birthday(self, birthday):
+        # Перевірка на коректність формату дня народження
+        pass
 
-    def load_from_disk(self, filename):
-        with open(filename, 'r') as file:
-            contact_list = json.load(file)
+    def save_to_file(self, filename):
+        with open(filename, "wb") as file:
+            pickle.dump(self.records, file)
 
-        self.contacts = []
-        for contact_data in contact_list: 
-            contact = Contact(contact_data['name'], contact_data['phone'])
-            self.contacts.append(contact)
+    @classmethod
+    def load_from_file(cls, filename):
+        with open(filename, "rb") as file:
+            records = pickle.load(file)
+        address_book = cls()
+        address_book.records = records
+        return address_book
 
-    def search_contacts(self, search_term):
+    def search(self, query):
         results = []
-        for contact in self.contacts:
-            if search_term.lower() in contact.name.lower() or search_term in contact.phone:
-                results.append(contact)
-
+        for record in self.records:
+            if query.lower() in record.name.lower() or query in record.phone:
+                results.append(record)
         return results
 
-# Приклад використання
 
-# Створення адресної книги та додавання контактів
-# address_book = AddressBook()
-# address_book.add_contact("John Doe", "1234567890")
-# address_book.add_contact("Jane Smith", "0987654321")
+if __name__ == "__main__":
+    # Створення об'єктів Record
+    record1 = Record("John Doe", "123456789", datetime.date(1995, 5, 9))
+    record2 = Record("Jane Smieth", "85743632521", datetime.date(1999, 8, 20))
+    record3 = Record("Bobi Jonson", "556644555666")
 
-# # Збереження адресної книги на диск
-# address_book.save_to_disk("address_book.json")
+    # Створення об'єкту AddressBook
+    address_book = AddressBook()
 
-# # Відновлення адресної книги з диска
-# address_book.load_from_disk("address_book.json")
+    # Додавання записів до AddressBook
+    address_book.add_record(record1)
+    address_book.add_record(record2)
+    address_book.add_record(record3)
 
-# # Пошук контактів за вмістом
-# results = address_book.search_contacts("John")
-# for contact in results:
-#     print(f"Name: {contact.name}, Phone: {contact.phone}")
+    # Збереження адресної книги на диск
+    address_book.save_to_file("address_book.dat")
+
+    # Завантаження адресної книги з диска
+    loaded_address_book = AddressBook.load_from_file("address_book.dat")
+
+    # Виведення завантаженої адресної книги
+    for record in loaded_address_book.records:
+        print(record.name, record.phone)
+
+    # Пошук за вмістом книги контактів
+    search_query = input("Введіть рядок для пошуку: ")
+    search_results = loaded_address_book.search(search_query)
+
+    if search_results:
+        print("Результати пошуку:")
+        for record in search_results:
+            print(record.name, record.phone)
+    else:
+        print("Збігів не знайдено.")
